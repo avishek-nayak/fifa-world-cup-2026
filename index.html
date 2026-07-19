@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.anthropic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<title>Dispatch — Stadium Staff Auto-Routing</title>
+<meta name="description" content="Deterministic auto-routing for stadium venue staff. Hard filters, weighted scoring, transparent decisions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@400;450;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@400;450;500;600&amp;display=swap" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div class="shell">
+
+  <header class="mast">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+      </div>
+      <div>
+        <h1>Dispatch</h1>
+        <p>Stadium staff auto-routing &middot; all roles</p>
+      </div>
+    </div>
+    <div class="mast-r">
+      <div class="tele"><div class="v" id="t-staff">214</div><div class="k">On shift</div></div>
+      <div class="tele"><div class="v" id="t-routed">0</div><div class="k">Routed</div></div>
+      <div class="tele"><div class="v" id="t-lat">&mdash;</div><div class="k">Decision</div></div>
+      <span class="pill"><i aria-hidden="true"></i>LIVE</span>
+    </div>
+  </header>
+
+  <nav class="switch" id="switch" role="tablist" aria-label="Panel view">
+    <button type="button" role="tab" aria-selected="true" aria-controls="engine-panel" data-v="engine" class="on">Engine</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="device-panel" data-v="device" tabindex="-1">Device <span class="dot" id="sw-dot" hidden></span></button>
+  </nav>
+
+  <main class="grid" id="grid" role="main">
+
+    <section class="panel" id="engine-panel" aria-labelledby="engine-h">
+      <div class="p-head">
+        <div>
+          <h2 id="engine-h">Routing engine</h2>
+          <div class="sub">Deterministic scoring &middot; every value computed live</div>
+        </div>
+        <span class="eyebrow" id="weightmode">Weights: urgent</span>
+      </div>
+
+      <div class="incident" id="incident">
+        <div class="inc-in">
+          <div class="bolt" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg></div>
+          <div class="inc-body">
+            <div class="inc-title" id="inc-title">No active incident</div>
+            <div class="inc-meta" id="inc-meta">Trigger one to watch the engine assign it</div>
+          </div>
+          <span class="chip crit" id="inc-chip" hidden>Urgent</span>
+        </div>
+        <div class="gates" id="gates"></div>
+      </div>
+
+      <div class="route" id="route" aria-live="polite" aria-busy="false">
+        <div class="idle">
+          <div class="big">Engine idle</div>
+          Filters run first, then five weighted factors score everyone who survives.
+        </div>
+      </div>
+
+
+      <div class="triage" id="triage">
+        <label class="triage-lbl" for="triage-input">
+          Report an incident in plain language
+          <span class="triage-tag" id="triage-mode">rules</span>
+        </label>
+        <div class="triage-row">
+          <input class="triage-in" id="triage-input" type="text"
+                 placeholder="e.g. someone collapsed near section 104"
+                 aria-describedby="triage-help">
+          <button type="button" class="btn go" id="triage-run">Parse &amp; route</button>
+        </div>
+        <div class="triage-help" id="triage-help">Free text becomes a structured task, then the engine routes it.</div>
+        <div class="triage-out" id="triage-out" aria-live="polite" hidden></div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="btn go" id="run">Trigger incident</button>
+        <button type="button" class="btn" id="next">Next scenario</button>
+        <div class="mode">
+          <span id="speed-label">Detail</span>
+          <div class="seg" role="group" aria-labelledby="speed-label">
+            <button type="button" class="on" data-sp="1" aria-pressed="true">1&times;</button>
+            <button type="button" data-sp="2" aria-pressed="false">2&times;</button>
+            <button type="button" data-sp="4" aria-pressed="false">4&times;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="device" id="device-panel" aria-labelledby="device-h">
+      <div class="dev-head">
+        <h2 id="device-h" class="sr-only">Assigned staff device</h2>
+        <div class="dev-row">
+          <div class="dev-av" id="d-av" aria-hidden="true">&mdash;</div>
+          <div class="dev-id">
+            <div class="n" id="d-name">Awaiting assignment</div>
+            <div class="r" id="d-role">The winning staffer&rsquo;s device appears here</div>
+          </div>
+          <div class="dev-av-state"><i aria-hidden="true"></i>Free</div>
+        </div>
+        <div class="dev-stats">
+          <div><div class="n" id="d-open">0</div><div class="l">Open</div></div>
+          <div><div class="n" id="d-done">0</div><div class="l">Closed</div></div>
+          <div><div class="n" id="d-avg">4.2m</div><div class="l">Avg close</div></div>
+        </div>
+      </div>
+      <div class="dev-list" id="d-list">
+        <div class="dev-idle" id="d-idle">
+          <div class="b">No tasks</div>
+          Assignments land here the moment the engine picks this staffer.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div>Scores computed at runtime from the weighted model &mdash; nothing hardcoded. Tune weights in <code>src/scoring.js</code>.</div>
+    <div><code>filters &rarr; score &rarr; dispatch</code></div>
+  </footer>
+
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
